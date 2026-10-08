@@ -96,7 +96,7 @@ The first command runs fast unit tests of the guardrails without Ollama. The sec
 | Path | Purpose |
 | --- | --- |
 | `SPEC.md` | Full specification: scope, behaviour, guardrails, tests, build order |
-| `AGENTS.md`, `CLAUDE.md` | Rules for AI coding agents working on this repository |
+| `AGENTS.md`, `CLAUDE.md`, `.claude/skills/` | Rules and skills for AI coding agents working on this repository |
 | `knowledge/` | The game rules the chatbot answers from |
 | `personas/`, `scenarios/` | Opponent Preview content |
 | `evidence/` | Screenshots and the model bake-off for submission |

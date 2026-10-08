@@ -9,6 +9,16 @@ Midterm chatbot for the Poke Monopoly class project. Solo project owned by Pun (
 - If `SPEC.md` is missing something, contradicts itself, or conflicts with a user request, say so before implementing the affected behaviour. A behaviour change updates `SPEC.md` in the same commit.
 - This repository is separate from the game repository (`AokDesu/poke-monopoly`). Never import, modify or push to the game repository from here.
 
+## Skills
+
+Project skills live in `.claude/skills/` (Claude Code loads them automatically). Read the matching one before that kind of work; other agents read the `SKILL.md` file directly.
+
+| Work on | Read |
+| --- | --- |
+| Any feature, bug fix or behaviour change; any test | `.claude/skills/tdd/SKILL.md` |
+| Test cases, expected answers, citations, chunking, game facts | `.claude/skills/rules-map/SKILL.md` |
+| `app.py`: screens, messages, buttons, banners | `.claude/skills/ui-rules/SKILL.md` |
+
 ## Coding agent model policy (Claude Code)
 
 Use only Claude Opus 5.5 (`claude-opus-5-5`) and Claude Sonnet 5.5 (`claude-sonnet-5-5`). Opus is the ceiling. This policy covers coding agents only, not the chatbot's own Ollama models (`SPEC.md` §3.1).
@@ -33,7 +43,7 @@ Use only Claude Opus 5.5 (`claude-opus-5-5`) and Claude Sonnet 5.5 (`claude-sonn
 
 ## Engineering
 
-- Before any feature, bug fix or behaviour change, read and follow `C:/Users/pun/.agents/skills/tdd/SKILL.md` if it exists; otherwise follow plain red-green TDD. Pass this rule to every worker. Name the closest public seam (for example `guard.check_numbers()`, `rag.retrieve()`, `answer_rules()`) and proceed without asking for confirmation. One test at a time: watch it fail for the intended reason, implement the minimum, watch it pass. Bugs start with a failing regression test. Prose and config-only changes are validated directly, not with invented tests.
+- Before any feature, bug fix or behaviour change, read and follow `.claude/skills/tdd/SKILL.md`. Pass this rule to every worker. Name the closest public seam (for example `guard.check_numbers()`, `rag.retrieve()`, `answer_rules()`) and proceed without asking for confirmation. One test at a time: watch it fail for the intended reason, implement the minimum, watch it pass. Bugs start with a failing regression test. Prose and config-only changes are validated directly, not with invented tests.
 - Two test tiers (`SPEC.md` §10 step 5): fast unit tests with no Ollama, and the live suite marked `@pytest.mark.live`. Run the fast tier on every change; run the live tier before closing a step that touches prompts, retrieval, guardrails or the model.
 - Keep it minimal: standard library, NumPy and the dependencies listed in `SPEC.md` §3. A new dependency needs a stated reason. No vector database, no framework layers, no abstractions with one implementation, no speculative scaffolding.
 - `llm.py` is the only module that talks to Ollama. Everything else calls `llm.complete()` or `llm.embed()`.
