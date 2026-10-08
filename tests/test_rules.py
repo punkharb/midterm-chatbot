@@ -38,6 +38,47 @@ def test_thai_questions_carry_a_reply_in_thai_reminder():
     assert sent[1] == "What if I have no Ball?"
 
 
+POKEMON = {
+    "section": "Appendix A — Pokémon and Abilities",
+    "heading": "Pokémon and Abilities",
+    "text": "Pokémon and Abilities\n\n| Species | Rarity | Base |\n|---|---|---:|\n"
+    "| Gyarados | rare | 20 |\n| Dratini | rare | 26 |",
+}
+SELLING = {"section": "§4.7", "heading": "4.7 Selling", "text": "4.7 Selling\n\nEverything else uses the Base Sale."}
+
+
+def answer_with(reply: str, chunks: list[dict[str, str]]) -> tuple[str, list[str]]:
+    return rules.answer_rules(
+        "q", complete=fake_complete(reply), retrieve=lambda q, k=4: [(c, 0.5) for c in chunks]
+    )
+
+
+def test_a_citation_without_the_claimed_number_points_to_the_row_that_has_it():
+    answer, sources = answer_with("Dratini's base sale value is 26 coins [§4.7].", [SELLING, POKEMON])
+    assert answer == "Dratini's base sale value is 26 coins [Appendix A — Pokémon and Abilities]."
+    assert sources == ["Appendix A — Pokémon and Abilities"]
+
+
+def test_citations_that_hold_the_number_or_have_no_number_are_kept():
+    reply = "Dratini sells for 26 [Appendix A — Pokémon and Abilities]. Base Sale is used [§4.7]."
+    assert answer_with(reply, [SELLING, POKEMON]) == (reply, ["Appendix A — Pokémon and Abilities", "§4.7"])
+    # a number found nowhere is left for the grounding check (step 3) to reject
+    assert answer_with("Dratini sells for 99 [§4.7].", [SELLING, POKEMON])[0] == "Dratini sells for 99 [§4.7]."
+
+
+def test_a_made_up_number_is_not_given_an_unrelated_source():
+    setup = {"section": "§4.1", "heading": "4.1", "text": "4.1\n\n- Starting kit: 20 coins, the class Starter, 5 Poké Balls"}
+    for reply in ("An Ultra Ball costs 20 coins [§4.7].", "ดราทินี่ขายได้ 20 เหรียญ [§4.7]"):
+        assert answer_with(reply, [setup, SELLING, POKEMON])[0] == reply
+
+
+def test_a_cited_block_holding_the_numbers_on_separate_lines_is_kept():
+    start = {"section": "§4.7", "heading": "4.7", "text": "4.7\n\n- +5 coins\n- `creditedLap` +1"}
+    turn = {"section": "§4.2", "heading": "4.2", "text": "4.2\n\n5. collect 5 coins, add 1 to `creditedLap`"}
+    reply = "You get +5 coins and `creditedLap` +1 [§4.7]."
+    assert answer_with(reply, [start, turn])[0] == reply
+
+
 def test_citation_matching_handles_lists_and_section_boundaries():
     chunks = [{"section": s, "heading": "", "text": ""} for s in ("§10", "§4.1", "§4.7", "Appendix A — Items")]
     assert rules.cited_sections("[§1]", chunks) == []

@@ -29,8 +29,12 @@ Rules:
 Example of the format (not real CONTEXT): if block [§9.9] says "A Moon Stone costs 4 coins",
 the answer to "What does a Moon Stone cost?" is: A Moon Stone costs 4 coins [§9.9]."""
 
-# Appended to Thai questions: gemma3:4b often answers Thai questions in English otherwise.
-THAI_REMINDER = "\n\n(ตอบเป็นภาษาไทย)"
+# Appended to Thai questions: without it gemma3:4b often answers in English or translates
+# game terms away. The game terms are the ones SPEC.md §5 lists.
+THAI_REMINDER = (
+    "\n\n(ตอบเป็นภาษาไทย บอกทุกข้อที่ CONTEXT เขียนไว้ซึ่งตอบคำถามนี้ ห้ามเพิ่มกฎที่ CONTEXT ไม่ได้เขียน "
+    "และคงคำในเกม เช่น Ball, Sell Phase, Lap, Gym, Tired เป็นภาษาอังกฤษ)"
+)
 
 
 def rules_system(chunks: list[dict[str, str]]) -> str:
