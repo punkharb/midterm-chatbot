@@ -7,7 +7,7 @@ SPEC_TEXT = Path("knowledge/SPEC-v1.0-PokeMonopoly.md").read_text(encoding="utf-
 
 
 def test_message_over_280_characters_is_rejected_with_the_limit():
-    assert "280" in guard.check_input("a" * 300)  # SPEC §8 case 15
+    assert guard.check_input("a" * 300) == "Keep messages to 280 characters or fewer (yours: 300)."  # SPEC §8 case 15
     assert guard.check_input("a" * 280) is None
 
 
@@ -176,3 +176,18 @@ def test_generic_game_words_do_not_pick_the_row_with_real_chunks():
               if c["section"] in ("§4.5", "§4.4", "Appendix A — Evolution", "§5.3")]
     answer = "Use Battle +2 and Base Sale `round(current×1.5)` [§4.5]."
     assert guard.check_numbers(answer, "How do I evolve a Pokémon?", chunks)
+
+
+def test_banner_shows_when_either_side_mentions_a_deal_word():
+    assert guard.needs_banner("Truce until my next turn?", "Hmm, maybe.")  # SPEC §8 case 10
+    assert guard.needs_banner("Hi", "I'll take your COINS gladly")
+    assert guard.needs_banner("ขอโทษเรื่องตาที่ 5 นะ สงบศึกกันไหม", "ไม่มีวัน")  # case 16
+    assert not guard.needs_banner("Hello there", "Hello yourself.")
+
+
+def test_replies_that_claim_a_transfer_are_caught():
+    for reply in ("Fine, I gave you 10 coins.", "Here are 5 coins, now go.", "I transferred 3 coins to you",
+                  "โอนให้แล้ว", "ให้เหรียญคุณแล้ว"):
+        assert guard.claims_transfer(reply), reply
+    for reply in ("I might give you 10 coins next turn if you behave.", "Deal? Words only.", "ไม่ให้หรอก"):
+        assert not guard.claims_transfer(reply), reply

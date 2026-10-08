@@ -41,7 +41,7 @@ def ask(question: str, model: Model, score: float = 0.6) -> tuple[str, list[str]
 
 def test_bad_input_is_answered_without_calling_the_model():
     model = Model()
-    assert ask("a" * 300, model) == (guard.TOO_LONG, [])
+    assert ask("a" * 300, model) == (guard.check_input("a" * 300), [])
     assert ask("?!", model) == (guard.ASK_FOR_QUESTION, [])
 
 

@@ -5,16 +5,16 @@ import llm
 
 def test_unreachable_ollama_gives_plain_error(monkeypatch):
     monkeypatch.setattr(llm, "OLLAMA_HOST", "http://127.0.0.1:9")
-    with pytest.raises(llm.LLMError, match="Ollama is not running"):
+    with pytest.raises(llm.LLMError, match=r"^Ollama is not running\. Start it, then reload\.$"):
         llm.complete("system", [{"role": "user", "content": "hi"}])
-    with pytest.raises(llm.LLMError, match="Ollama is not running"):
+    with pytest.raises(llm.LLMError, match=r"^Ollama is not running\. Start it, then reload\.$"):
         llm.embed(["hi"])
 
 
 @pytest.mark.live
 def test_missing_model_tells_user_to_pull_it(monkeypatch):
     monkeypatch.setattr(llm, "LLM_MODEL", "no-such-model:1b")
-    with pytest.raises(llm.LLMError, match="ollama pull no-such-model:1b"):
+    with pytest.raises(llm.LLMError, match=r"^Model `no-such-model:1b` is missing\. Run `ollama pull no-such-model:1b`\.$"):
         llm.complete("system", [{"role": "user", "content": "hi"}])
 
 
