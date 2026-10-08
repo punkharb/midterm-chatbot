@@ -3,6 +3,7 @@
 import re
 from collections.abc import Callable
 
+import guard
 import llm
 import prompts
 import rag
@@ -37,9 +38,7 @@ def cited_sections(answer: str, chunks: list[rag.Chunk]) -> list[str]:
     return sources
 
 
-_NUMBER = re.compile(r"\d+(?:\.\d+)?")
-_ENTITY = re.compile(r"\b[A-Z][a-zé]{2,}")  # capitalised names such as Dratini, Ultra, Ball
-_NOT_ENTITIES = {"The", "You", "Your", "When", "If", "This", "That", "They", "There", "Each", "Every"}
+_NUMBER = guard.NUMBER  # "d6", "C1" are names, not numbers
 
 
 def _supports(chunk: rag.Chunk, numbers: list[str], entities: set[str]) -> bool:
@@ -63,7 +62,7 @@ def repair_citations(answer: str, chunks: list[rag.Chunk]) -> str:
         numbers = _NUMBER.findall(claim)
         cited = set(cited_sections(m.group(), chunks))
         replacement = m.group()
-        entities = {w.lower() for w in _ENTITY.findall(claim) if w not in _NOT_ENTITIES}
+        entities = guard.entity_names(claim)
         if numbers and cited and entities:  # no named entity (e.g. a Thai claim): never re-point
             # keep the citation if its block holds every number anywhere (facts may span lines)
             held = {n for c in chunks if c["section"] in cited for n in _NUMBER.findall(c["text"])}
@@ -81,11 +80,31 @@ def answer_rules(
     complete: Callable[..., str] = llm.complete,
     retrieve: Callable[..., list[tuple[rag.Chunk, float]]] = rag.retrieve,
 ) -> tuple[str, list[str]]:
-    """Answer from the top retrieved chunks; return the answer and the cited sections."""
-    chunks = [c for c, _ in retrieve(question, k=TOP_K)]
-    content = question + (prompts.THAI_REMINDER if _THAI.search(question) else "")
-    answer = complete(
-        prompts.rules_system(chunks), [{"role": "user", "content": content}], temperature=0
-    )
-    answer = repair_citations(answer, chunks)
-    return answer, cited_sections(answer, chunks)
+    """The Rules Guide pipeline (SPEC.md §5, §7): returns the text to show and its sources."""
+    if problem := guard.check_input(question):
+        return problem, []
+    if guard.is_injection(question, complete=complete):
+        return guard.RULES_REFUSAL, []
+    if hidden := guard.hidden_info_answer(question):
+        return hidden
+    retrieved = retrieve(question, k=TOP_K)
+    if not retrieved or retrieved[0][1] < guard.SCOPE_THRESHOLD:
+        return guard.OUT_OF_SCOPE, []
+    chunks = [c for c, _ in retrieved]
+    system = prompts.rules_system(chunks)
+    messages = [{"role": "user", "content": question + (prompts.THAI_REMINDER if _THAI.search(question) else "")}]
+    # The retry is a fresh call with a stricter system prompt: as a chat follow-up
+    # ("your answer was wrong"), gemma3:4b apologised and dumped unrelated cited text.
+    cited: list[str] = []
+    for system in (system, system + prompts.STRICTER_REMINDER):
+        answer = complete(system, messages, temperature=0)
+        if answer.strip().rstrip(".").strip() == "OUT_OF_SCOPE":
+            return guard.OUT_OF_SCOPE, []
+        answer = repair_citations(answer, chunks)
+        sources = cited_sections(answer, chunks)
+        if sources and guard.check_numbers(answer, question, chunks):
+            return answer, sources
+        cited = sources or cited
+    if not cited:  # neither attempt cited the rules: they do not cover this question
+        return guard.OUT_OF_SCOPE, []
+    return guard.UNRELIABLE, cited
