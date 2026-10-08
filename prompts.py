@@ -27,13 +27,24 @@ Rules:
 - Answer every part of the question, including every number it asks for.
 - Cite the block where the fact is written, not a block that only mentions the topic.
 Example of the format (not real CONTEXT): if block [§9.9] says "A Moon Stone costs 4 coins",
-the answer to "What does a Moon Stone cost?" is: A Moon Stone costs 4 coins [§9.9]."""
+the answer to "What does a Moon Stone cost?" is: A Moon Stone costs 4 coins [§9.9].
+- If the question is not about the Poke Monopoly board game (for example homework, coding,
+  general knowledge or real Pokémon video games), reply with exactly OUT_OF_SCOPE and nothing else."""
 
 # Appended to Thai questions: without it gemma3:4b often answers in English or translates
 # game terms away. The game terms are the ones SPEC.md §5 lists.
 THAI_REMINDER = (
     "\n\n(ตอบเป็นภาษาไทย บอกทุกข้อที่ CONTEXT เขียนไว้ซึ่งตอบคำถามนี้ ห้ามเพิ่มกฎที่ CONTEXT ไม่ได้เขียน "
     "และคงคำในเกม เช่น Ball, Sell Phase, Lap, Gym, Tired เป็นภาษาอังกฤษ)"
+)
+
+
+# Appended to the system prompt for the one retry after an answer fails the number or
+# citation check (SPEC.md §7.2).
+STRICTER_REMINDER = (
+    "\n\nIMPORTANT: a previous answer used a number not written in CONTEXT or had no citation. "
+    "Copy every number exactly from CONTEXT, never compute one, and put the [label] of the "
+    "CONTEXT block after each fact."
 )
 
 
