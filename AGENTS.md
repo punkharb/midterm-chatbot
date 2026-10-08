@@ -57,8 +57,8 @@ Use only Claude Opus 5.5 (`claude-opus-5-5`) and Claude Sonnet 5.5 (`claude-sonn
 ```bash
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt     # bin/python on macOS/Linux
-ollama pull scb10x/typhoon2.1-gemma3-4b
-ollama pull qwen3:4b                                         # bake-off challenger only
+ollama pull gemma3:4b
+ollama pull qwen2.5:3b                                       # bake-off baseline only
 ollama pull bge-m3
 .venv/Scripts/python -m streamlit run app.py
 .venv/Scripts/python -m pytest -m "not live"                 # fast tier

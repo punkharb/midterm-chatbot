@@ -26,7 +26,7 @@ There is one fixed mode, not AgeWell's three: players need correct rules, and an
 
 ```text
 question ─► input guard ─► bge-m3 embedding ─► top-4 rule chunks ─► local LLM ─► output guard ─► answer + sources
-            (length,                            (NumPy cosine,       (Typhoon 2.1    (numbers grounded,
+            (length,                            (NumPy cosine,       (Gemma 3 4B     (numbers grounded,
              injection)                          score threshold)     Gemma3 4B)      citation present)
 ```
 
@@ -35,7 +35,7 @@ Everything runs locally through [Ollama](https://ollama.com): no API key and no 
 | Component | Choice |
 | --- | --- |
 | UI | Streamlit |
-| Chat model | `scb10x/typhoon2.1-gemma3-4b` (Thai-tuned, fits a 4 GB GPU); chosen by a bake-off against `qwen3:4b`, recorded in `evidence/model-bakeoff.md` |
+| Chat model | `gemma3:4b` (good Thai, runs on a 4 GB GPU); compared against `qwen2.5:3b`, recorded in `evidence/model-bakeoff.md` |
 | Embeddings | `bge-m3` (multilingual, so Thai questions match the English rules) |
 | Search | In-memory NumPy cosine similarity |
 | Knowledge | `knowledge/SPEC-v1.0-PokeMonopoly.md`, the game specification |
@@ -55,7 +55,7 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
-ollama pull scb10x/typhoon2.1-gemma3-4b
+ollama pull gemma3:4b
 ollama pull bge-m3
 ```
 
@@ -69,7 +69,7 @@ streamlit run app.py
 
 Then open the URL Streamlit prints (usually http://localhost:8501).
 
-On a slow machine, set `LLM_MODEL=qwen2.5:3b` in `.env` for a smaller model.
+Answers take roughly 5–20 s on a 4 GB GPU, longer on CPU only.
 
 ## Test
 
@@ -78,7 +78,7 @@ pytest -m "not live"
 pytest -m live
 ```
 
-Model bake-off only: `ollama pull qwen3:4b`.
+Model bake-off only: `ollama pull qwen2.5:3b`.
 
 The first command runs fast unit tests of the guardrails without Ollama. The second runs the 16 end-to-end cases from SPEC.md §8, including Thai questions, hidden-information probes and prompt-injection attempts, against the local models.
 
@@ -86,7 +86,7 @@ The first command runs fast unit tests of the guardrails without Ollama. The sec
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LLM_MODEL` | `scb10x/typhoon2.1-gemma3-4b` | Ollama chat model |
+| `LLM_MODEL` | `gemma3:4b` | Ollama chat model |
 | `EMBED_MODEL` | `bge-m3` | Ollama embedding model |
 | `MODE` | `strict` | Answer mode; only `strict` is implemented |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama server |

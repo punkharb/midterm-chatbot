@@ -44,37 +44,48 @@ The instructor allows any stack. Use this one (keep it minimal). Everything runs
 | Ollama client | `ollama` Python package, talking to the local server at `http://localhost:11434` |
 | Embeddings | `bge-m3` via Ollama (`ollama.embed`), 567M params, 1.2 GB, 100+ languages, so Thai questions match the English rules |
 | Vector search | In-memory NumPy cosine similarity over a few hundred chunks; cache embeddings to `.cache/index.npz` keyed by the knowledge file's hash, `EMBED_MODEL` and the chunk settings; no vector database |
-| Chat model | `scb10x/typhoon2.1-gemma3-4b` (see §3.1) |
+| Chat model | `gemma3:4b` (see §3.1) |
 | Guard classifier | The same chat model, asked a yes/no question at temperature 0 |
 | Tests | `pytest` in `tests/`: fast unit tests (no Ollama) plus `tests/test_guardrails.py`, the live suite for §8 |
 
 Dependencies: `streamlit`, `ollama`, `numpy`, `python-dotenv`, `pytest`. Nothing else without a reason.
 
-Config via `.env` (see `.env.example`): `LLM_MODEL` (default `scb10x/typhoon2.1-gemma3-4b`), `EMBED_MODEL` (default `bge-m3`), `MODE` (default `strict`, §2.1), `OLLAMA_HOST` (default local).
+Config via `.env` (see `.env.example`): `LLM_MODEL` (default `gemma3:4b`), `EMBED_MODEL` (default `bge-m3`), `MODE` (default `strict`, §2.1), `OLLAMA_HOST` (default local).
 
-**Hosted API later:** build local-only first. Put every LLM call behind one function (`llm.complete(system, messages, **options)`, options such as `temperature`) and every embedding call behind `llm.embed(texts)`. `llm.py` loads `.env` first, then builds an `ollama.Client(host=...)` from config rather than using the module-level default client, and sends `think=False` only to models that support thinking (the `qwen3` family). This seam lets a hosted-API provider be added later with `LLM_PROVIDER` and `API_KEY` if the instructor's machine cannot run the local model. Never commit keys.
+**Hosted API later:** build local-only first. Put every LLM call behind one function (`llm.complete(system, messages, **options)`, options such as `temperature`) and every embedding call behind `llm.embed(texts)`. `llm.py` loads `.env` first, then builds an `ollama.Client(host=...)` from config rather than using the module-level default client, and sends `think=False` only to models that support thinking (e.g. the `qwen3` family; none of the current candidates). This seam lets a hosted-API provider be added later with `LLM_PROVIDER` and `API_KEY` if the instructor's machine cannot run the local model. Never commit keys.
 
 ### 3.1 Model choice
 
-Dev machine: 32 GB RAM, NVIDIA GTX 1650 with 4 GB VRAM. A 4B model at Q4 (~3 GB) fits in VRAM; 7–8B models spill to CPU and get slow.
+Dev machine: 32 GB RAM, NVIDIA GTX 1650 with 4 GB VRAM, Ollama 0.40.1. A 4B model loads partly on the GPU (about 54% CPU / 46% GPU, because the display uses part of the VRAM).
 
-| Rank | Model | Why | Role |
-|---|---|---|---|
-| 1 | `scb10x/typhoon2.1-gemma3-4b` | Thai-tuned by SCB 10X on Gemma 3 4B; best Thai for its size; fits 4 GB VRAM; no "thinking" overhead | **Default** |
-| 2 | `qwen3:4b` | Strong multilingual (100+ languages) 2.5 GB; must call with thinking disabled (`think=False`) or it is slow and verbose | Challenger in the bake-off |
-| 3 | `qwen2.5:3b` | Already installed (1.9 GB); weaker Thai | Zero-download fallback for slow machines |
+Smoke test on 2026-10-08 (Ollama 0.40.1, temperature 0, two prompts: "ตอบสั้นๆ: ลูกเต๋ามีกี่หน้า" and "Ultra Ball | 3 | +2 → price in Thai"):
 
-**Bake-off (build step 5, once everything exists):** run the live test cases (§8) against ranks 1 and 2. Record pass count, Thai answer quality (manual 1–3 score on Thai cases 2 and 16) and median latency per answer. Pick the winner by pass count, then Thai quality, then latency. Write the table into `evidence/model-bakeoff.md`; it is evidence for the report. Do not tune the tests to favour a model.
+| Model | Result | Warm latency |
+|---|---|---|
+| `gemma3:4b` | Both correct, clean Thai ("ลูกเต๋ามี 6 หน้า"; Ultra Ball costs 3) | ~4 s short answer |
+| `scb10x/typhoon2.1-gemma3-4b` | **Does not run**: Ollama 0.40.1 fails with "Unable to generate parser for this template"; overriding the template with Gemma 3's did not help | n/a |
+| `qwen3:4b` | Ignores `think=False`; writes English reasoning instead of an answer | 20–80 s |
+| `qwen2.5:3b` | Wrong and garbled Thai ("ลูกเต๋ามีหน้าสอง片面") | ~3 s |
+
+| Rank | Model | Role |
+|---|---|---|
+| 1 | `gemma3:4b` | **Default.** Same base as Typhoon, 140+ languages, works on this Ollama |
+| 2 | `qwen2.5:3b` | Bake-off baseline and low-resource fallback only; its Thai is weak |
+| — | `scb10x/typhoon2.1-gemma3-4b` | Re-test if a later Ollama release runs it; it would be the preferred Thai model |
+| — | `qwen3:4b` | Dropped: thinking cannot be turned off on this Ollama version |
+
+**Bake-off (build step 5, once everything exists):** run the live test cases (§8) against `gemma3:4b` and `qwen2.5:3b` (plus Typhoon only if it runs by then). Record pass count, Thai answer quality (manual 1–3 score on Thai cases 2 and 16) and median latency per answer. Pick the winner by pass count, then Thai quality, then latency. Write the table, together with the smoke test above, into `evidence/model-bakeoff.md`; it is evidence for the report. Do not tune the tests to favour a model.
 
 Setup commands:
 
 ```bash
-ollama pull scb10x/typhoon2.1-gemma3-4b
-ollama pull qwen3:4b
+ollama pull gemma3:4b
 ollama pull bge-m3
 ```
 
-**Instructor machine without a GPU:** a 4B model on CPU answers in roughly 5–20 s. Acceptable for a demo; if not, set `LLM_MODEL=qwen2.5:3b` or add the hosted-API provider.
+`qwen2.5:3b` is already installed on the dev machine; elsewhere `ollama pull qwen2.5:3b` for the bake-off.
+
+**Latency budget:** a Rules Guide answer with 4 retrieved chunks will take longer than the smoke test (expect roughly 5–20 s on the dev machine; more on CPU-only). Show a spinner (ui-rules skill). If the instructor's machine is too slow, add the hosted-API provider.
 
 ### 3.2 Folder layout
 
