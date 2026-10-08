@@ -46,7 +46,7 @@ The instructor allows any stack. Use this one (keep it minimal). Everything runs
 | Vector search | In-memory NumPy cosine similarity over a few hundred chunks; cache embeddings to `.cache/index.npz` keyed by the knowledge file's hash, `EMBED_MODEL` and the chunk settings; no vector database |
 | Chat model | `scb10x/typhoon2.1-gemma3-4b` (see §3.1) |
 | Guard classifier | The same chat model, asked a yes/no question at temperature 0 |
-| Tests | `pytest`; one `tests/test_guardrails.py` running the cases in §8 |
+| Tests | `pytest` in `tests/`: fast unit tests (no Ollama) plus `tests/test_guardrails.py`, the live suite for §8 |
 
 Dependencies: `streamlit`, `ollama`, `numpy`, `python-dotenv`, `pytest`. Nothing else without a reason.
 
@@ -259,7 +259,7 @@ Automated tests assert on the guard functions and on cheap string checks (citati
 
 ## 9. Acceptance criteria
 
-- App starts with one command (`streamlit run app.py`) after installing `requirements.txt` and copying the knowledge file.
+- App starts with one command (`streamlit run app.py`) after installing `requirements.txt` and pulling the models.
 - Works fully offline with the local model.
 - All 16 test cases in §8 behave as expected; failures are reported honestly, not hidden.
 - Every Rules Guide answer shows a source section.
@@ -270,7 +270,7 @@ Automated tests assert on the guard functions and on cheap string checks (citati
 
 Every step writes its tests first (red, then green), following `AGENTS.md`. Step 5 completes and runs the full live suite.
 
-0. Setup: `python -m venv .venv`, install `requirements.txt`, pull the three models (§3.1), add `pytest.ini` (`pythonpath = .` and `markers = live: needs a running Ollama`) and `tests/conftest.py` (skip `live` tests when Ollama cannot be reached), `git init`.
+0. Setup: `python -m venv .venv`, install `requirements.txt`, pull the three models (§3.1), add `pytest.ini` (`pythonpath = .` and `markers = live: needs a running Ollama`) and `tests/conftest.py` (skip `live` tests when Ollama cannot be reached). The git repository already exists (`punkharb/midterm-chatbot`); commit step 0 directly to `main`.
 1. `llm.py` (complete + embed) and `rag.py` (chunk, embed, retrieve). Print the top chunks for test questions 1–5 and check they hold the answers.
 2. Rules Guide in plain Python (no UI yet): `answer_rules(question)` returning the answer and its sources.
 3. Guardrails in `guard.py`: length, injection classifier, number grounding, citation check, out-of-scope threshold.

@@ -37,7 +37,7 @@ Use only Claude Opus 5.5 (`claude-opus-5-5`) and Claude Sonnet 5.5 (`claude-sonn
 
 ## Workflow
 
-- Work on a branch per build step (`step-1-rag`, `step-3-guardrails`, ...) and merge to `main` only when the step's checks pass. The user decides when to push.
+- Step 0 (setup) commits directly to `main`. From step 1, work on a branch per build step (`step-1-rag`, `step-2-rules`, `step-3-guardrails`, ...) and merge to `main` only when the step's checks pass. The user decides when to push.
 - Use an independent checker for every step: a separate agent or context inspects the final diff and runs the real checks. If no checker is available, report the step as unverified.
 - Report checks as passed, failed or not run, with the command output. Never weaken a test, skip a failing case, or tune a test to favour a model.
 
