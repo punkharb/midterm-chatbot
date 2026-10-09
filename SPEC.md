@@ -85,6 +85,19 @@ ollama pull bge-m3
 
 `qwen2.5:3b` is already installed on the dev machine; elsewhere `ollama pull qwen2.5:3b` for the bake-off.
 
+**Speed measurement (2026-10-09, dev machine).** A Rules Guide answer takes about 12–15 s:
+- reading the ~1,900-token prompt takes 10–12 s, because only about 1.5 GB of `gemma3:4b` fits on the 4 GB GPU;
+- writing the reply takes about 1 s;
+- each classifier call takes about 1 s.
+
+A smaller `num_ctx` did not help. Shorter contexts were tried on SPEC §8 cases 1–9 and were faster but less accurate, so the full 4 chunks stay:
+- 4 whole chunks: 9/9, median 14.9 s;
+- 3 chunks: 8/9, 12.2 s;
+- best 12 units: 7/9, 5.1 s;
+- best 8 units: 6/9, 7.1 s.
+
+What was changed instead: the app warms up the index and the model when a session starts (`rules.warm_up`), and every call asks Ollama to keep the models loaded (`OLLAMA_KEEP_ALIVE`, default 30 min). That removes the ~7 s model load from the first question.
+
 **Latency budget:** a Rules Guide answer with 4 retrieved chunks will take longer than the smoke test (expect roughly 5–20 s on the dev machine; more on CPU-only). Show a spinner (ui-rules skill). If the instructor's machine is too slow, add the hosted-API provider.
 
 ### 3.2 Folder layout

@@ -108,3 +108,10 @@ def answer_rules(
     if not cited:  # neither attempt cited the rules: they do not cover this question
         return guard.OUT_OF_SCOPE, []
     return guard.UNRELIABLE, cited
+
+
+def warm_up() -> None:
+    """Load the rule index and the chat model before the first question, so the first
+    answer does not also pay for loading (about 7 s for gemma3:4b on the dev machine)."""
+    rag.retrieve("warm up", k=1)
+    llm.complete("Reply with one word.", [{"role": "user", "content": "ok"}], temperature=0)

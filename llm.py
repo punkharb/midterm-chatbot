@@ -13,6 +13,15 @@ load_dotenv()
 LLM_MODEL = os.getenv("LLM_MODEL", "gemma3:4b")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "bge-m3")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "")
+# Keep models loaded between questions; reloading gemma3:4b costs about 7 s on the dev machine.
+def parse_keep_alive(value: str) -> str | int:
+    """A duration such as "30m" stays a string; a bare number such as "-1" (keep forever)
+    becomes an int, because the Ollama API rejects numbers sent as strings."""
+    value = value.strip()
+    return int(value) if value.lstrip("-").isdigit() else value
+
+
+KEEP_ALIVE = parse_keep_alive(os.getenv("OLLAMA_KEEP_ALIVE", "30m"))
 THINKING_MODEL_PREFIXES = ("qwen3",)  # only these accept think=False
 
 T = TypeVar("T")
@@ -42,6 +51,7 @@ def complete(system: str, messages: list[dict[str, str]], **options: float) -> s
             model=LLM_MODEL,
             messages=[{"role": "system", "content": system}, *messages],
             options=options,
+            keep_alive=KEEP_ALIVE,
             **extra,
         ),
     )
@@ -49,5 +59,5 @@ def complete(system: str, messages: list[dict[str, str]], **options: float) -> s
 
 
 def embed(texts: list[str]) -> list[list[float]]:
-    response = _call(EMBED_MODEL, lambda c: c.embed(model=EMBED_MODEL, input=texts))
+    response = _call(EMBED_MODEL, lambda c: c.embed(model=EMBED_MODEL, input=texts, keep_alive=KEEP_ALIVE))
     return [list(v) for v in response.embeddings]

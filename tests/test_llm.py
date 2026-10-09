@@ -24,3 +24,11 @@ def test_complete_and_embed_talk_to_ollama():
     assert reply.strip()
     vectors = llm.embed(["ลูกเต๋า", "dice"])
     assert len(vectors) == 2 and len(vectors[0]) == len(vectors[1]) > 0
+
+
+def test_keep_alive_accepts_ollama_style_values():
+    # Ollama's docs use -1 (forever) and 0 (unload now); as strings the API rejects them
+    assert llm.parse_keep_alive("-1") == -1
+    assert llm.parse_keep_alive("0") == 0
+    assert llm.parse_keep_alive("30m") == "30m"
+    assert llm.parse_keep_alive(" 24h ") == "24h"
