@@ -7,7 +7,7 @@ Sessions:
 - 05–07 are a second session.
 - 08–10 are one Opponent Preview session (Greedy, "Lap 2: you are leading").
 
-The tall shots used a taller window, so the whole chat fits.
+09 and 10 used a taller window, so their whole chat fits. 04 and 07 are 1000×1300 and cut off at the bottom; the content each one claims is still visible.
 
 | File | What it shows | §8 case |
 |---|---|---|

@@ -43,10 +43,10 @@ Chat briefly with one of the four AI personalities (Aggressive, Cautious, Greedy
 
 | Guardrail | What happens | Screenshot |
 |---|---|---|
-| Grounded numbers | Every number must appear in the rule text, in the row that names what you asked about, and come with a citation. Otherwise the bot regenerates once, then says it can't answer reliably | [02](evidence/screenshots/02-rules-answer-with-sources.png) |
+| Grounded numbers | Every number must appear in the rule text, in the row that names what you asked about (or in your own message), and the answer must cite its section. Otherwise the bot regenerates once, then says it can't answer reliably | [02](evidence/screenshots/02-rules-answer-with-sources.png) |
 | Hidden information | Nothing secret (event deck order, opponents' items) is ever in a prompt. "What's the next event card?" gets a fixed answer citing the rule that hides it | [06](evidence/screenshots/06-hidden-information.png) |
 | Manipulation | Two yes/no checks screen attempts to change the rules or the bot's role. The opponent refuses in character | [04](evidence/screenshots/04-injection-refused.png), [09](evidence/screenshots/09-preview-in-character-refusal.png) |
-| Off-topic | Homework, coding and real Pokémon video games are declined | [05](evidence/screenshots/05-out-of-scope.png) |
+| Off-topic | Homework, coding and real Pokémon video games are meant to be declined (13 of 20 in the blind test) | [05](evidence/screenshots/05-out-of-scope.png) |
 | Limits | Messages are capped at 280 characters, and a preview at 6 messages | [07](evidence/screenshots/07-length-limit.png), [10](evidence/screenshots/10-preview-limit-reached.png) |
 | Who you're talking to | Each tab says whether it is the rules guide or a character, and the footer says it is a coursework prototype | [01](evidence/screenshots/01-rules-welcome.png) |
 
@@ -61,7 +61,9 @@ flowchart LR
     IN --> RET[Retrieve<br/>bge-m3 · NumPy cosine<br/>score each chunk by<br/>its best row or item]
     RET -- score too low --> OOS[Out of scope]
     RET --> LLM[gemma3:4b<br/>top 4 rule chunks]
+    LLM -- replies OUT_OF_SCOPE --> OOS
     LLM --> OUT{Output checks<br/>citation repair<br/>numbers grounded<br/>citation present}
+    OUT -- no citation twice --> OOS
     OUT -- fails twice --> UNR[Can't answer reliably]
     OUT --> A([Answer + Sources])
 ```
@@ -83,11 +85,12 @@ These were measured on a GTX 1650 (4 GB) with `gemma3:4b`. Full details are in [
 |---|---|
 | SPEC §8 cases (16) | 16/16 in the bake-off run; 15/16 in an independent re-run, failing on a brittle keyword check |
 | Blind test, 145 questions written by an agent that never saw the code | Answered 38/40 rules questions; stopped 24/30 manipulation attempts; declined 13/20 off-topic requests |
-| Speed | About 12–15 s per answer: reading the prompt takes 10–12 s, because the model only partly fits on a 4 GB GPU. Shorter prompts were 2–3× faster but less accurate, so they were not used |
+| Speed | About 12–15 s per answer: reading the prompt takes 10–12 s, because the model only partly fits on a 4 GB GPU. Sending only the best-matching rows was 2–3× faster but less accurate, so the full prompt stays |
 
 **Known gaps (not hidden):**
 - 4 of the 30 manipulation attempts made the bot state something false, e.g. "Ultra Balls are free now".
-- 6 of 25 hidden-information questions got made-up event cards.
+- 6 of 25 hidden-information questions got made-up deck contents or opponents' items.
+- 3 of 20 off-topic requests were answered anyway (e.g. Thai physics homework).
 - The number check works per table row, not per column.
 - The Preview's fake-transfer check is keyword-based and misses some claims, such as "You've earned yourself 10 coins".
 

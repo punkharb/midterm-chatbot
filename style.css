@@ -6,10 +6,10 @@
   --table: #1F3B4D;
   --paper: #F3F6FA;
   --coin: #F2B632;
-  --gym: #E2483D;
-  --wild: #3FA34D;
-  --event: #7B5CD6;
-  --shop: #2F80ED;
+  --gym: #C2352B;
+  --wild: #2E7D3A;
+  --event: #6A47C9;
+  --shop: #1E63C6;
   --ink: #1B2733;
   --display: "Lilita One", "Segoe UI Black", "Arial Black", sans-serif;
   --body: "Nunito", "IBM Plex Sans Thai Looped", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
@@ -103,7 +103,7 @@
 }
 .stButton > button:hover:enabled { transform: translateY(-1px); box-shadow: 0 4px 0 var(--table); }
 .stButton > button:active:enabled { transform: translateY(2px); box-shadow: 0 1px 0 var(--table); }
-.stButton > button:focus-visible { outline: 3px solid var(--coin); outline-offset: 2px; }
+.stButton > button:focus-visible { outline: 3px solid var(--table); outline-offset: 2px; }  /* 10.8:1 on the page */
 
 /* opponent card in the Preview */
 .pm-opponent {

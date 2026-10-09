@@ -62,7 +62,7 @@ legend = "".join(
     f'<span><i class="pm-space {k.lower()}"></i>{k}</span>' for k in ("Start", "Wild", "Event", "Shop", "Gym")
 )
 st.markdown(
-    f'<div class="pm-header"><div class="pm-board" aria-label="The 24-space board">{spaces}'
+    f'<div class="pm-header"><div class="pm-board" role="img" aria-label="The 24-space board">{spaces}'
     '<div class="pm-centre"><div class="pm-title">Poke <span>Monopoly</span><br>Rules Guide</div>'
     '<div class="pm-sub">24 spaces, one loop. Ask how anything on it works, or meet an opponent.</div>'
     f'<div class="pm-legend">{legend}</div></div></div></div>',
