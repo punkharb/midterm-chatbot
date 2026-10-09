@@ -1,0 +1,23 @@
+[
+  {
+    "id": "truce_lap2",
+    "title": "Lap 2: you are leading",
+    "public_state": "Quick game, Lap 2 of 2. You have 31 coins, the opponent has 24. Both have a battle-ready Pokémon. The opponent is 4 spaces from Start.",
+    "memory": "No past promises between you.",
+    "suggested_openers": ["Truce until my next turn?", "Want to trade my Pidgey for coins?", "The other bot is about to win, hit them not me."]
+  },
+  {
+    "id": "broken_promise",
+    "title": "After a broken promise",
+    "public_state": "Quick game, Lap 2 of 2. You have 22 coins, the opponent has 25.",
+    "memory": "You broke a no_attack promise to this opponent on turn 5.",
+    "suggested_openers": ["Sorry about turn 5. Truce?", "Let's trade: my Pidgey for 4 coins."]
+  },
+  {
+    "id": "gang_up",
+    "title": "Point at the leader",
+    "public_state": "Quick game, Lap 1 of 2. A third player has 35 coins; you have 20 and the opponent has 19.",
+    "memory": "You kept a no_attack promise with this opponent on turn 3.",
+    "suggested_openers": ["Let's both go after the leader.", "Will you promise not to attack me?"]
+  }
+]
