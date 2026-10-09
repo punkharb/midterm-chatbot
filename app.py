@@ -106,14 +106,16 @@ with rules_tab:
     st.caption(RULES_HEADER)
     question = state.pop("rules_input_pending", None)
     if not state.rules_chat and not question:
-        st.markdown("Ask anything about the Poke Monopoly rules. For example:")
-        st.markdown("\n".join(f"- {q}" for q in EXAMPLES))
+        st.markdown("Ask anything about the Poke Monopoly rules, or try one of these:")
+        for i, example in enumerate(EXAMPLES):
+            st.button(example, key=f"example_{i}", on_click=state.update,
+                      kwargs={"rules_input_pending": example})
     for turn in state.rules_chat:
         show(turn)
     if question:  # shown at once, answered under a spinner (ui-rules: no blank screens)
         show(user := {"role": "user", "text": question})
         try:
-            with st.spinner("Looking it up in the rules…"):
+            with st.spinner("Reading the rules… this can take 10–20 seconds."):
                 answer, sources = rules.answer_rules(question)
             state.rules_chat += [user, {"role": "assistant", "text": answer, "sources": sources}]
             show(state.rules_chat[-1])
@@ -146,7 +148,7 @@ with preview_tab:
             history = [{"role": t["role"], "content": t["text"]} for t in state.preview_chat]
             show(user := {"role": "user", "text": message})
             try:
-                with st.spinner("Your opponent is thinking…"):
+                with st.spinner("Your opponent is thinking… this can take 5–10 seconds."):
                     reply, banner = preview.preview_reply(persona, scenario, history, message)
                 state.preview_chat += [user, {"role": "assistant", "text": reply, "banner": banner,
                                                "avatar": PERSONA_FACES[persona]}]

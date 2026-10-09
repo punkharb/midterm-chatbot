@@ -29,6 +29,7 @@ def app(monkeypatch):
 
 def texts(at: AppTest) -> str:
     parts = [e.value for kind in ("caption", "markdown", "info", "warning", "error", "success") for e in getattr(at, kind)]
+    parts += [b.label for b in at.button]
     for msg in at.chat_message:
         parts += [e.value for e in msg.markdown]
     return "\n".join(str(p) for p in parts)
@@ -134,3 +135,9 @@ def test_a_warm_up_failure_is_shown_plainly(monkeypatch):
     at = AppTest.from_file(str(Path(__file__).parent.parent / "app.py"), default_timeout=30)
     at.run()
     assert [e.value for e in at.error] == ["Ollama is not running. Start it, then reload."]
+
+
+def test_an_example_question_button_asks_it(app):
+    app.button(key="example_0").click().run()
+    shown = texts(app)
+    assert "What do I get when I pass Start?" in shown and "Sources: §4.7" in shown
