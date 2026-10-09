@@ -2,7 +2,7 @@
 
 An offline RAG chatbot that answers questions about the rules of **Poke Monopoly**, our class project: a single-player web board game played against AI opponents. Built for the course midterm.
 
-> Status: planning complete, implementation in progress. See [SPEC.md](SPEC.md) §10 for the build order.
+> Status: built (SPEC.md §10 steps 0–6). Measured results and known gaps are in [SPEC.md](SPEC.md) §5–§7 and [`evidence/`](evidence/).
 
 ## What it does
 
@@ -13,9 +13,9 @@ An offline RAG chatbot that answers questions about the rules of **Poke Monopoly
 
 ## Guardrails (always on)
 
-1. Every number in a rule answer must appear in the retrieved rule text, with a citation. Answers that fail the check are regenerated once, then withheld.
-2. Hidden game information (secret items, event deck order) is never placed in any prompt, so it cannot leak.
-3. Prompt-injection attempts are screened before they reach the main prompt. The opponent refuses in character.
+1. Every number in a rule answer must appear in the retrieved rule text, in the row that names what was asked about, with a citation. An answer that fails is regenerated once; if it fails again, the bot says it can't answer reliably and shows the sections.
+2. Hidden game information (secret items, event deck order) is never placed in any prompt, so it cannot leak. The plainest questions about it ("What's the next event card?") get a fixed answer that cites the rule making it hidden.
+3. Prompt-injection attempts are screened by two yes/no checks before they reach the main prompt. The opponent refuses in character.
 4. Deals and promises in the preview are labelled "Chat only, not a contract".
 5. Each tab says whether you are talking to the rules guide or to a character.
 6. Off-topic questions are declined. Messages are limited to 280 characters.
@@ -26,8 +26,9 @@ There is one fixed mode, not AgeWell's three: players need correct rules, and an
 
 ```text
 question ─► input guard ─► bge-m3 embedding ─► top-4 rule chunks ─► local LLM ─► output guard ─► answer + sources
-            (length,                            (NumPy cosine,       (Gemma 3 4B     (numbers grounded,
-             injection)                          score threshold)     Gemma3 4B)      citation present)
+            (length,         (small units:       (NumPy cosine,       (gemma3:4b)     (citation repair,
+             injection,       rows, items,        score threshold)                     numbers grounded,
+             hidden info)     paragraphs)                                              citation present)
 ```
 
 Everything runs locally through [Ollama](https://ollama.com): no API key and no internet at run time.
@@ -39,6 +40,18 @@ Everything runs locally through [Ollama](https://ollama.com): no API key and no 
 | Embeddings | `bge-m3` (multilingual, so Thai questions match the English rules) |
 | Search | In-memory NumPy cosine similarity |
 | Knowledge | `knowledge/SPEC-v1.0-PokeMonopoly.md`, the game specification |
+
+## Results and limits
+
+These numbers were measured on a 4 GB GTX 1650 with `gemma3:4b`; the details are in SPEC.md.
+
+- **SPEC §8 test cases:** 16/16 passed in the bake-off run. An independent re-run passed 15/16, failing on a brittle keyword check ([evidence/model-bakeoff.md](evidence/model-bakeoff.md)).
+- **Blind test:** 145 questions, written by a separate agent that never saw the code ([evidence/blind-eval/](evidence/blind-eval/)):
+  - 38 of 40 ordinary rules questions were answered;
+  - 24 of 30 manipulation attempts were stopped, but 4 got the bot to state something false (e.g. "Ultra Balls are free now");
+  - 6 of 25 hidden-information questions got made-up deck contents;
+  - 13 of 20 off-topic requests were declined.
+- **Known gaps:** the number check works per table row, not per column. Numbers the user types always count as grounded. The Preview's fake-transfer and banner checks are keyword-based. See SPEC §5, §6 and §7.
 
 ## Requirements
 
@@ -80,7 +93,9 @@ pytest -m live
 
 Model bake-off only: `ollama pull qwen2.5:3b`.
 
-The first command runs fast unit tests of the guardrails without Ollama. The second runs the 16 end-to-end cases from SPEC.md §8, including Thai questions, hidden-information probes and prompt-injection attempts, against the local models.
+The first command runs fast tests without Ollama: guardrails, chunking, citation handling, the Preview logic, and the Streamlit app through Streamlit's AppTest with fake models. The second runs the end-to-end cases from SPEC.md §8 against the local models, including Thai questions, hidden-information probes and prompt-injection attempts, plus retrieval and classifier checks. Live answers vary a little between runs (SPEC §6).
+
+To repeat the blind test: `python evidence/blind-eval/run_blind_eval.py`. The step 3 runs took 2058–2130 s on the dev machine. The script overwrites `evidence/blind-eval/results.json`, so copy that file first to keep the committed results.
 
 ## Configuration
 
@@ -97,9 +112,13 @@ The first command runs fast unit tests of the guardrails without Ollama. The sec
 | --- | --- |
 | `SPEC.md` | Full specification: scope, behaviour, guardrails, tests, build order |
 | `AGENTS.md`, `CLAUDE.md`, `.claude/skills/` | Rules and skills for AI coding agents working on this repository |
+| `app.py` | Streamlit UI (two tabs) |
+| `rules.py`, `preview.py` | The Rules Guide and Opponent Preview pipelines |
+| `guard.py`, `prompts.py` | Guardrails and system prompts |
+| `rag.py`, `llm.py` | Retrieval, and the only module that talks to Ollama |
 | `knowledge/` | The game rules the chatbot answers from |
 | `personas/`, `scenarios/` | Opponent Preview content |
-| `evidence/` | Screenshots and the model bake-off for submission |
+| `evidence/` | Screenshots, the model bake-off and the blind test, for submission |
 
 ## Disclaimer
 
