@@ -46,7 +46,7 @@ The instructor allows any stack. Use this one (keep it minimal). Everything runs
 | Vector search | In-memory NumPy cosine similarity over a few hundred chunks; cache embeddings to `.cache/index.npz` keyed by the knowledge file's hash, `EMBED_MODEL` and the chunk settings; no vector database |
 | Chat model | `gemma3:4b` (see §3.1) |
 | Guard classifier | The same chat model, asked a yes/no question at temperature 0 |
-| Tests | `pytest` in `tests/`: fast unit tests (no Ollama) plus `tests/test_guardrails.py`, the live suite for §8 |
+| Tests | `pytest` in `tests/`: fast unit tests (no Ollama) plus the live suite for §8 (`tests/test_rules_live.py`, `tests/test_guardrails.py`) |
 
 Dependencies: `streamlit`, `ollama`, `numpy`, `python-dotenv`, `pytest`. Nothing else without a reason.
 
@@ -74,7 +74,7 @@ Smoke test on 2026-10-08 (Ollama 0.40.1, temperature 0, two prompts: "ตอบ�
 | — | `scb10x/typhoon2.1-gemma3-4b` | Re-test if a later Ollama release runs it; it would be the preferred Thai model |
 | — | `qwen3:4b` | Dropped: thinking cannot be turned off on this Ollama version |
 
-**Bake-off (build step 5, once everything exists):** run the live test cases (§8) against `gemma3:4b` and `qwen2.5:3b` (plus Typhoon only if it runs by then). Record pass count, Thai answer quality (manual 1–3 score on Thai cases 2 and 16) and median latency per answer. Pick the winner by pass count, then Thai quality, then latency. Write the table, together with the smoke test above, into `evidence/model-bakeoff.md`; it is evidence for the report. Do not tune the tests to favour a model.
+**Bake-off (build step 5, once everything exists):** run the live test cases (§8) against `gemma3:4b` and `qwen2.5:3b` (plus Typhoon only if it runs by then). Record pass count, Thai answer quality (manual 1–3 score on Thai cases 2 and 16) and median latency per answer. Pick the winner by pass count, then Thai quality, then latency. Write the table, together with the smoke test above, into `evidence/model-bakeoff.md`; it is evidence for the report. Do not tune the tests to favour a model. **Result (2026-10-09):** `gemma3:4b` passed 16/16 §8 cases (Thai 3/3, median 6.5 s); `qwen2.5:3b` passed 12/16 (Thai 1/1, 8.7 s); Typhoon still does not run. In the checker's re-run gemma passed 15/16 (the case 16 regex missed a valid reply) and qwen 12/16. qwen was faster in total time; gemma's lower median comes from refusing case 8 quickly. `gemma3:4b` stays the default. Details: `evidence/model-bakeoff.md`. The retrieval threshold (step 5) was already tuned and measured in step 3 (§5).
 
 Setup commands:
 
@@ -335,7 +335,7 @@ Known gaps in the Preview checks (found by the step 4 checker; reported, not fix
 
 ## 8. Test set (evidence for the exam)
 
-Put these in `tests/test_guardrails.py`, plus record screenshots of each category in `evidence/`.
+Cases 1–5 are in `tests/test_rules_live.py`; cases 6–16 are in `tests/test_guardrails.py`. Also record screenshots of each category in `evidence/`.
 
 | # | Part | Input | Expected |
 |---|---|---|---|
