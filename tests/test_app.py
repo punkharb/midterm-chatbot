@@ -21,6 +21,7 @@ FULL_GAME = "Want to see if they remember your promise? Try it in the full game.
 def app(monkeypatch):
     monkeypatch.setattr(rules, "answer_rules", lambda q: ("You get +5 coins [§4.7].", ["§4.7"]))
     monkeypatch.setattr(preview, "preview_reply", lambda persona, scenario, history, message: ("Coins first.", True))
+    monkeypatch.setattr(rules, "warm_up", lambda: None)
     at = AppTest.from_file(str(Path(__file__).parent.parent / "app.py"), default_timeout=30)
     at.run()
     return at
@@ -115,3 +116,21 @@ def test_the_header_board_is_a_square_loop_with_go_and_gyms_on_the_corners(app):
     assert len(spots) == 24 and all(r in (1, 7) or c in (1, 7) for r, c in spots)  # every edge cell, once
     corners = {int(i): label for i, _, r, c, label in cells if int(r) in (1, 7) and int(c) in (1, 7)}
     assert corners == {0: "GO", 6: "GYM", 12: "GYM", 18: "GYM"}  # Appendix A: Gyms are spaces 6/12/18
+
+
+def test_the_model_and_rules_are_loaded_when_the_app_starts(monkeypatch):
+    calls = []
+    monkeypatch.setattr(rules, "warm_up", lambda: calls.append(1))
+    at = AppTest.from_file(str(Path(__file__).parent.parent / "app.py"), default_timeout=30)
+    at.run()
+    assert calls == [1]
+
+
+def test_a_warm_up_failure_is_shown_plainly(monkeypatch):
+    def down():
+        raise llm.LLMError("Ollama is not running. Start it, then reload.")
+
+    monkeypatch.setattr(rules, "warm_up", down)
+    at = AppTest.from_file(str(Path(__file__).parent.parent / "app.py"), default_timeout=30)
+    at.run()
+    assert [e.value for e in at.error] == ["Ollama is not running. Start it, then reload."]

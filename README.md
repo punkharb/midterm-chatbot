@@ -105,6 +105,7 @@ To repeat the blind test: `python evidence/blind-eval/run_blind_eval.py`. The st
 | `EMBED_MODEL` | `bge-m3` | Ollama embedding model |
 | `MODE` | `strict` | Answer mode; only `strict` is implemented |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama server |
+| `OLLAMA_KEEP_ALIVE` | `30m` | How long Ollama keeps the models loaded between questions |
 
 ## Project files
 

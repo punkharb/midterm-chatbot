@@ -74,6 +74,15 @@ state.setdefault("preview_chat", [])  # {"role", "text", "banner"?}
 state.setdefault("preview_ended", False)
 
 
+if not state.get("warmed_up"):
+    try:
+        with st.spinner("Loading the rules and the model…"):
+            rules.warm_up()
+        state.warmed_up = True
+    except llm.LLMError as e:
+        st.error(str(e))
+
+
 def queue(key: str) -> None:
     state[key + "_pending"] = state[key]
 
