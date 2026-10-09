@@ -80,7 +80,7 @@ On macOS or Linux, use `source .venv/bin/activate` and `cp .env.example .env`.
 streamlit run app.py
 ```
 
-Then open the URL Streamlit prints (usually http://localhost:8501).
+Then open the URL Streamlit prints (usually http://localhost:8501). The game fonts (Lilita One, Nunito, IBM Plex Sans Thai Looped) load from Google Fonts when online. Offline, the app falls back to system fonts and works the same.
 
 Answers take roughly 5–20 s on a 4 GB GPU, longer on CPU only.
 
@@ -112,7 +112,7 @@ To repeat the blind test: `python evidence/blind-eval/run_blind_eval.py`. The st
 | --- | --- |
 | `SPEC.md` | Full specification: scope, behaviour, guardrails, tests, build order |
 | `AGENTS.md`, `CLAUDE.md`, `.claude/skills/` | Rules and skills for AI coding agents working on this repository |
-| `app.py` | Streamlit UI (two tabs) |
+| `app.py`, `style.css`, `.streamlit/config.toml` | Streamlit UI (two tabs) and its game look |
 | `rules.py`, `preview.py` | The Rules Guide and Opponent Preview pipelines |
 | `guard.py`, `prompts.py` | Guardrails and system prompts |
 | `rag.py`, `llm.py` | Retrieval, and the only module that talks to Ollama |

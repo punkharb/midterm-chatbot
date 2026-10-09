@@ -1,6 +1,8 @@
 """Poke Monopoly Rules Guide: Streamlit UI (SPEC.md §2, §5–§7; ui-rules skill).
 Chat history lives only in st.session_state; nothing is written to disk."""
 
+from pathlib import Path
+
 import streamlit as st
 
 import guard
@@ -19,7 +21,38 @@ EXAMPLES = (
     "ถ้าไม่มีบอลแต่เจอโปเกมอนทำไงได้บ้าง",
 )
 
-st.set_page_config(page_title="Poke Monopoly Rules Guide")
+# Appendix A — Board: the real 24-space loop, drawn as the header strip
+BOARD = (
+    "Start Wild Event Wild Shop Wild Gym Wild Event Wild Shop Wild "
+    "Gym Wild Event Shop Wild Event Gym Wild Shop Wild Event Wild"
+).split()
+PERSONA_FACES = {"Aggressive": "💢", "Cautious": "🛡️", "Greedy": "💰", "Opportunist": "🎲"}
+# SPEC §6.1 "typical chat stance", shown to the player on the opponent card
+PERSONA_STANCE = {
+    "Aggressive": "Rejects truces unless clearly winning anyway; taunts.",
+    "Cautious": "Likes truces and no_attack promises; avoids risky trades.",
+    "Greedy": "Haggles hard and wants coins in every trade.",
+    "Opportunist": "Agrees to gang up on the leader; keeps promises only while useful.",
+}
+PERSONA_COLOURS = {"Aggressive": "#E2483D", "Cautious": "#2F80ED", "Greedy": "#F2B632", "Opportunist": "#7B5CD6"}
+
+st.set_page_config(page_title="Poke Monopoly Rules Guide", page_icon="🎲")
+st.markdown(f"<style>{(Path(__file__).parent / 'style.css').read_text(encoding='utf-8')}</style>",
+            unsafe_allow_html=True)
+spaces = "".join(
+    f'<div class="pm-space {s.lower()}" title="{i} {s}">{"GO" if s == "Start" else s[0]}</div>'
+    for i, s in enumerate(BOARD)
+)
+legend = "".join(
+    f'<span><i class="pm-space {k.lower()}"></i>{k}</span>' for k in ("Start", "Wild", "Event", "Shop", "Gym")
+)
+st.markdown(
+    '<div class="pm-header"><div class="pm-title">Poke <span>Monopoly</span> Rules Guide</div>'
+    '<div class="pm-sub">24 spaces, one loop. Ask how anything on it works, or meet an opponent.</div>'
+    f'<div class="pm-board" aria-label="The 24-space board loop">{spaces}</div>'
+    f'<div class="pm-legend">{legend}</div></div>',
+    unsafe_allow_html=True,
+)
 state = st.session_state
 state.setdefault("rules_chat", [])  # {"role", "text", "sources"?}
 state.setdefault("preview_chat", [])  # {"role", "text", "banner"?}
@@ -31,7 +64,7 @@ def queue(key: str) -> None:
 
 
 def show(turn: dict) -> None:
-    with st.chat_message(turn["role"]):
+    with st.chat_message(turn["role"], avatar=turn.get("avatar") or ("🧢" if turn["role"] == "user" else "📘")):
         st.markdown(turn["text"])
         if turn.get("sources"):
             st.caption("Sources: " + ", ".join(turn["sources"]))
@@ -70,6 +103,12 @@ with preview_tab:
     titles = [s["title"] for s in preview.SCENARIOS]
     title = st.selectbox("Scenario", titles, key="scenario", on_change=reset_preview)
     scenario = preview.SCENARIOS[titles.index(title)]
+    st.markdown(
+        f'<div class="pm-opponent" style="--persona: {PERSONA_COLOURS[persona]}">'
+        f'<div class="face">{PERSONA_FACES[persona]}</div><div><div class="name">{persona}</div>'
+        f'<div class="say">{PERSONA_STANCE[persona]}</div></div></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(f"**Situation:** {scenario['public_state']}  \n**They remember:** {scenario['memory']}")
 
     message = state.pop("preview_input_pending", None)
@@ -85,7 +124,8 @@ with preview_tab:
             try:
                 with st.spinner("Your opponent is thinking…"):
                     reply, banner = preview.preview_reply(persona, scenario, history, message)
-                state.preview_chat += [user, {"role": "assistant", "text": reply, "banner": banner}]
+                state.preview_chat += [user, {"role": "assistant", "text": reply, "banner": banner,
+                                               "avatar": PERSONA_FACES[persona]}]
                 show(state.preview_chat[-1])
             except llm.LLMError as e:
                 st.error(str(e))
