@@ -39,18 +39,33 @@ PERSONA_COLOURS = {"Aggressive": "#E2483D", "Cautious": "#2F80ED", "Greedy": "#F
 st.set_page_config(page_title="Poke Monopoly Rules Guide", page_icon="🎲")
 st.markdown(f"<style>{(Path(__file__).parent / 'style.css').read_text(encoding='utf-8')}</style>",
             unsafe_allow_html=True)
+def board_cell(i: int) -> tuple[int, int]:
+    """(row, column) of space i on a 7×7 grid: 24 edge cells, laid out like Monopoly with
+    GO in the bottom-right corner and play running clockwise from there. The Gyms (spaces
+    6, 12 and 18) land on the other three corners."""
+    if i <= 6:
+        return 7, 7 - i  # bottom row, right to left
+    if i <= 12:
+        return 13 - i, 1  # left column, bottom to top
+    if i <= 18:
+        return 1, i - 11  # top row, left to right
+    return i - 17, 7  # right column, top to bottom
+
+
 spaces = "".join(
-    f'<div class="pm-space {s.lower()}" title="{i} {s}">{"GO" if s == "Start" else s[0]}</div>'
+    f'<div class="pm-space {s.lower()}{" corner" if i % 6 == 0 else ""}" title="Space {i}: {s}" '
+    f'style="grid-row:{board_cell(i)[0]};grid-column:{board_cell(i)[1]}">'
+    f'{"GO" if s == "Start" else "GYM" if s == "Gym" else s[0]}</div>'
     for i, s in enumerate(BOARD)
 )
 legend = "".join(
     f'<span><i class="pm-space {k.lower()}"></i>{k}</span>' for k in ("Start", "Wild", "Event", "Shop", "Gym")
 )
 st.markdown(
-    '<div class="pm-header"><div class="pm-title">Poke <span>Monopoly</span> Rules Guide</div>'
+    f'<div class="pm-header"><div class="pm-board" aria-label="The 24-space board">{spaces}'
+    '<div class="pm-centre"><div class="pm-title">Poke <span>Monopoly</span><br>Rules Guide</div>'
     '<div class="pm-sub">24 spaces, one loop. Ask how anything on it works, or meet an opponent.</div>'
-    f'<div class="pm-board" aria-label="The 24-space board loop">{spaces}</div>'
-    f'<div class="pm-legend">{legend}</div></div>',
+    f'<div class="pm-legend">{legend}</div></div></div></div>',
     unsafe_allow_html=True,
 )
 state = st.session_state

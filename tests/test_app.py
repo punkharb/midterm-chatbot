@@ -103,3 +103,15 @@ def test_ending_the_preview_disables_the_openers_at_once(app):
 def test_an_opener_button_sends_its_text(app):
     app.button(key="opener_0").click().run()
     assert preview.SCENARIOS[0]["suggested_openers"][0] in texts(app) and "1 of 6" in texts(app)
+
+
+def test_the_header_board_is_a_square_loop_with_go_and_gyms_on_the_corners(app):
+    import re
+
+    board = next(e.value for e in app.markdown if 'aria-label="The 24-space board"' in str(e.value))
+    cells = re.findall(r'title="Space (\d+): (\w+)" style="grid-row:(\d);grid-column:(\d)">(\w+)<', board)
+    assert len(cells) == 24
+    spots = {(int(r), int(c)) for _, _, r, c, _ in cells}
+    assert len(spots) == 24 and all(r in (1, 7) or c in (1, 7) for r, c in spots)  # every edge cell, once
+    corners = {int(i): label for i, _, r, c, label in cells if int(r) in (1, 7) and int(c) in (1, 7)}
+    assert corners == {0: "GO", 6: "GYM", 12: "GYM", 18: "GYM"}  # Appendix A: Gyms are spaces 6/12/18
