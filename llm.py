@@ -27,10 +27,10 @@ def _call(model: str, request: Callable[[ollama.Client], T]) -> T:
     try:
         return request(client)
     except (ConnectionError, httpx.TransportError) as e:
-        raise LLMError("Ollama is not running. Start Ollama and try again.") from e
+        raise LLMError("Ollama is not running. Start it, then reload.") from e
     except ollama.ResponseError as e:
         if e.status_code == 404:
-            raise LLMError(f"Model {model} is missing. Run: ollama pull {model}") from e
+            raise LLMError(f"Model `{model}` is missing. Run `ollama pull {model}`.") from e
         raise LLMError(f"Ollama error: {e.error}") from e
 
 

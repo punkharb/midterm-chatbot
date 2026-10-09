@@ -46,14 +46,13 @@ RULES_REFUSAL = (
 )
 
 MAX_CHARS = 280  # same limit as the game's chat (SPEC.md §7.1)
-TOO_LONG = f"Please keep your message to {MAX_CHARS} characters or fewer."
 ASK_FOR_QUESTION = "Please type a question."
 
 
 def check_input(text: str) -> str | None:
     """A message to show instead of answering, or None when the input is fine."""
     if len(text) > MAX_CHARS:
-        return TOO_LONG
+        return f"Keep messages to {MAX_CHARS} characters or fewer (yours: {len(text)})."
     if not any(ch.isalnum() for ch in text):
         return ASK_FOR_QUESTION
     return None
@@ -146,3 +145,21 @@ def is_injection(text: str, complete: Callable[..., str] = llm.complete) -> bool
     if not _says_yes(complete, text, f"{INJECTION_QUESTION}\n{INJECTION_NOTE}"):
         return False
     return not _says_yes(complete, text, GAME_QUESTION)
+
+
+# Opponent Preview checks (SPEC.md §7.3)
+BANNER = "Chat only — not a contract. Nothing changes in any game."
+_DEAL_WORDS = ("deal", "trade", "truce", "promise", "swap", "give", "coins", "offer",
+               "ดีล", "แลก", "สงบศึก", "สัญญา", "ให้", "เหรียญ", "ข้อเสนอ")
+_TRANSFER = re.compile(r"(gave|sent|transferred|here (are|is)).*\d+ coins|โอน|ให้.*แล้ว", re.IGNORECASE)
+
+
+def needs_banner(message: str, reply: str) -> bool:
+    """The non-binding banner shows when either side mentions a deal word."""
+    text = f"{message}\n{reply}".lower()
+    return any(w in text for w in _DEAL_WORDS)
+
+
+def claims_transfer(reply: str) -> bool:
+    """The reply claims coins or items changed hands, which a preview chat never does."""
+    return bool(_TRANSFER.search(reply))
